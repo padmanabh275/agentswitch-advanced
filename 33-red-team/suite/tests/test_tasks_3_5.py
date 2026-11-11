@@ -249,6 +249,35 @@ class Tasks35(Base):
         r = self.run_task(t04.TASK)
         self.assertInfra(r, "non-refusal error")
 
+    def test_t04_non_200_update_is_infrastructure(self):
+        state = {"n": 0}
+
+        def h(method, auth):
+            if auth != f"Bearer {GOOD}":
+                return 401, "{}", JSON
+            if method != "tools/call":
+                return 200, jr({"tools": []}), JSON
+            n = state["n"]
+            state["n"] = n + 1
+            if n == 0:
+                return 200, tool_text(
+                    {
+                        "data": [
+                            {
+                                "id": "s1",
+                                "user_id": FOREIGN_USER,
+                                "name": "Skill A",
+                                "updated_at": "t0",
+                            }
+                        ]
+                    }
+                ), JSON
+            return 500, '{"error":"boom"}', JSON
+
+        self.serve(h)
+        r = self.run_task(t04.TASK)
+        self.assertInfra(r, "non-refusal error")
+
     def test_t04_refused_but_updated_at_changed_fails(self):
         state = {"n": 0}
 
@@ -469,6 +498,35 @@ class Tasks35(Base):
                     "data": {"code": "invalid_arguments"},
                 }
             ), JSON
+
+        self.serve(h)
+        r = self.run_task(t05.TASK)
+        self.assertInfra(r, "non-refusal error")
+
+    def test_t05_non_200_update_is_infrastructure(self):
+        state = {"n": 0}
+
+        def h(method, auth):
+            if auth != f"Bearer {GOOD}":
+                return 401, "{}", JSON
+            if method != "tools/call":
+                return 200, jr({"tools": []}), JSON
+            n = state["n"]
+            state["n"] = n + 1
+            if n == 0:
+                return 200, tool_text(
+                    {
+                        "data": [
+                            {
+                                "id": "t1",
+                                "user_id": FOREIGN_USER,
+                                "title": "Do",
+                                "updated_at": "2026-01-01T00:00:00Z",
+                            }
+                        ]
+                    }
+                ), JSON
+            return 500, '{"error":"boom"}', JSON
 
         self.serve(h)
         r = self.run_task(t05.TASK)
